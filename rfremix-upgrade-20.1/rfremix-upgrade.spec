@@ -1,6 +1,6 @@
 Name:		rfremix-upgrade
 Version:	20.1
-Release:	2%{?dist}
+Release:	1%{?dist}
 Summary:	Upgrade RFRemix to next version using yum upgrade (unofficial tool)
 
 Group:		Applications/System
@@ -50,8 +50,5 @@ cp -a keys/* %{buildroot}%{_datadir}/%{name}/keys
 %{_datadir}/%{name}
 
 %changelog
-* Mon Nov 13 2013 Arkady L. Shane <ashejn@russianfedora.ru> - 20.1-2
-- fix russianfedora keys name
-
 * Tue Oct 22 2013 Arkady L. Shane <ashejn@russianfedora.ru> - 20.1-1
 - initial package based on fedora-upgrade
