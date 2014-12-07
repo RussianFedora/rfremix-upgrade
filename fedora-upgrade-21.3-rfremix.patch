@@ -1,6 +1,6 @@
 diff -urN fedora-upgrade-21.3/fedora-upgrade rfremix-upgrade-21.3/fedora-upgrade
 --- fedora-upgrade-21.3/fedora-upgrade	2014-11-24 11:06:20.000000000 +0300
-+++ rfremix-upgrade-21.3/fedora-upgrade	2014-12-07 22:54:57.850566626 +0300
++++ rfremix-upgrade-21.3/fedora-upgrade	2014-12-08 01:58:38.127230765 +0300
 @@ -2,12 +2,12 @@
  # vim: sw=3:ts=3:et
  set -e
@@ -17,7 +17,7 @@ diff -urN fedora-upgrade-21.3/fedora-upgrade rfremix-upgrade-21.3/fedora-upgrade
  }
  
  function pause() {
-@@ -49,12 +49,26 @@
+@@ -49,12 +49,24 @@
  }
  
  function import_keys() {
@@ -31,10 +31,8 @@ diff -urN fedora-upgrade-21.3/fedora-upgrade rfremix-upgrade-21.3/fedora-upgrade
 -    rpm --import /usr/share/fedora-upgrade/keys/RPM-GPG-KEY-rpmfusion-nonfree-fedora-$TARGET_VERSION
 +    rpm --import /usr/share/rfremix-upgrade/keys/RPM-GPG-KEY-rpmfusion-nonfree-fedora-$TARGET_VERSION
 +  fi
-+  if [ $TARGET_VERSION -ge 21 ]; then
-+    if [ -f /etc/yum.repos.d/russianfedora-branding.repo ]; then
-+      rpm --import /usr/share/rfremix-upgrade/keys/RPM-GPG-KEY-russianfedora-fixes-branding
-+    fi
++  if [ -f /etc/yum.repos.d/russianfedora-branding.repo ]; then
++    rpm --import /usr/share/rfremix-upgrade/keys/RPM-GPG-KEY-russianfedora-fixes-branding
 +  fi
 +  if [ -f /etc/yum.repos.d/russianfedora-fixes.repo ]; then
 +    rpm --import /usr/share/rfremix-upgrade/keys/RPM-GPG-KEY-russianfedora-fixes-fedora
@@ -47,7 +45,7 @@ diff -urN fedora-upgrade-21.3/fedora-upgrade rfremix-upgrade-21.3/fedora-upgrade
    fi
  }
  
-@@ -103,7 +117,14 @@
+@@ -103,7 +115,14 @@
  function is_prerelease() {
    # will print string "--enablerepo=updates-testing" if this is prerelease, "" otherwise
    local RELEASE=$1
@@ -63,7 +61,7 @@ diff -urN fedora-upgrade-21.3/fedora-upgrade rfremix-upgrade-21.3/fedora-upgrade
      echo "--enablerepo=updates-testing"
    else
      echo ""
-@@ -113,17 +134,17 @@
+@@ -113,17 +132,17 @@
  function print_exit_banner() {
    if [ $UPGRADE_FINISHED -eq 1 ]; then
      echo
@@ -85,7 +83,7 @@ diff -urN fedora-upgrade-21.3/fedora-upgrade rfremix-upgrade-21.3/fedora-upgrade
      echo Finish steps manually according to documentation on the wiki:
      echo 'http://fedoraproject.org/wiki/Upgrading_Fedora_using_yum#5._Make_sure_Fedora_is_upgraded'
      exit 2
-@@ -131,11 +152,11 @@
+@@ -131,11 +150,11 @@
  }
  
  function welcome_banner() {
@@ -99,7 +97,7 @@ diff -urN fedora-upgrade-21.3/fedora-upgrade rfremix-upgrade-21.3/fedora-upgrade
    echo "         not officially tested by FedoraQA."
    pause
  }
-@@ -157,28 +178,28 @@
+@@ -157,28 +176,28 @@
    done
    if [ "$ANSWER" != "nonproduct" ] ; then
      # would be nice to use:
@@ -133,7 +131,7 @@ diff -urN fedora-upgrade-21.3/fedora-upgrade rfremix-upgrade-21.3/fedora-upgrade
    welcome_banner 20
  
    install_deps
-@@ -198,7 +219,7 @@
+@@ -198,7 +217,7 @@
    cleanup_cache
    unwanted_packages 19
    UPGRADE_FINISHED=1
@@ -142,7 +140,22 @@ diff -urN fedora-upgrade-21.3/fedora-upgrade rfremix-upgrade-21.3/fedora-upgrade
    welcome_banner 21
  
    install_deps
-@@ -220,18 +241,18 @@
+@@ -207,6 +226,14 @@
+   import_keys
+ 
+   yum update -q yum
++
++  echo "Adding russianfedora-branding repository."
++  echo "Russian Fedora Branding is a new repository that contains"
++  echo "branding packages which were in Fixes repository before."
++
++  yum -y --nogpgcheck install \
++    http://mirror.yandex.ru/fedora/russianfedora/russianfedora/branding/fedora/releases/21/Everything/i386/os/russianfedora-branding-release-21-1.R.noarch.rpm
++
+   yum clean -q dbcache rpmdb plugins metadata
+   enable_updates=$(is_prerelease 21)
+   yum --releasever=21 --disableplugin=presto $enable_updates distro-sync
+@@ -220,18 +247,18 @@
    cleanup_cache
    unwanted_packages 20
    UPGRADE_FINISHED=1
@@ -167,7 +180,7 @@ diff -urN fedora-upgrade-21.3/fedora-upgrade rfremix-upgrade-21.3/fedora-upgrade
    yum update -q yum
    yum clean -q dbcache rpmdb plugins metadata
    yum --releasever=rawhide --disableplugin=presto distro-sync --nogpgcheck
-@@ -244,7 +265,7 @@
+@@ -244,7 +271,7 @@
    cleanup_cache
    UPGRADE_FINISHED=1
  else
@@ -178,7 +191,7 @@ diff -urN fedora-upgrade-21.3/fedora-upgrade rfremix-upgrade-21.3/fedora-upgrade
  print_exit_banner
 diff -urN fedora-upgrade-21.3/fedora-upgrade.8.asciidoc rfremix-upgrade-21.3/fedora-upgrade.8.asciidoc
 --- fedora-upgrade-21.3/fedora-upgrade.8.asciidoc	2014-11-24 11:06:20.000000000 +0300
-+++ rfremix-upgrade-21.3/fedora-upgrade.8.asciidoc	2014-12-07 22:29:05.381979515 +0300
++++ rfremix-upgrade-21.3/fedora-upgrade.8.asciidoc	2014-12-08 01:40:33.586893430 +0300
 @@ -1,24 +1,24 @@
 -fedora-upgrade(8)
 +rfremix-upgrade(8)
@@ -225,7 +238,7 @@ diff -urN fedora-upgrade-21.3/fedora-upgrade.8.asciidoc rfremix-upgrade-21.3/fed
 +Arkady L. Shane <ashejn@russianfedora.pro>
 diff -urN fedora-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-branding-fedora rfremix-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-branding-fedora
 --- fedora-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-branding-fedora	1970-01-01 03:00:00.000000000 +0300
-+++ rfremix-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-branding-fedora	2014-09-02 14:44:27.000000000 +0400
++++ rfremix-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-branding-fedora	2014-12-08 01:40:33.586893430 +0300
 @@ -0,0 +1,31 @@
 +-----BEGIN PGP PUBLIC KEY BLOCK-----
 +Version: GnuPG v1
@@ -260,7 +273,7 @@ diff -urN fedora-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-branding-fedora rfr
 +-----END PGP PUBLIC KEY BLOCK-----
 diff -urN fedora-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-fixes-fedora rfremix-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-fixes-fedora
 --- fedora-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-fixes-fedora	1970-01-01 03:00:00.000000000 +0300
-+++ rfremix-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-fixes-fedora	2014-09-02 14:42:24.000000000 +0400
++++ rfremix-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-fixes-fedora	2014-12-08 01:40:33.586893430 +0300
 @@ -0,0 +1,30 @@
 +-----BEGIN PGP PUBLIC KEY BLOCK-----
 +Version: GnuPG v1.4.9 (GNU/Linux)
@@ -294,7 +307,7 @@ diff -urN fedora-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-fixes-fedora rfremi
 +-----END PGP PUBLIC KEY BLOCK-----
 diff -urN fedora-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-free-fedora rfremix-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-free-fedora
 --- fedora-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-free-fedora	1970-01-01 03:00:00.000000000 +0300
-+++ rfremix-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-free-fedora	2014-09-02 14:40:28.000000000 +0400
++++ rfremix-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-free-fedora	2014-12-08 01:40:33.586893430 +0300
 @@ -0,0 +1,30 @@
 +-----BEGIN PGP PUBLIC KEY BLOCK-----
 +Version: GnuPG v1.4.9 (GNU/Linux)
@@ -328,7 +341,7 @@ diff -urN fedora-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-free-fedora rfremix
 +-----END PGP PUBLIC KEY BLOCK-----
 diff -urN fedora-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-nonfree-fedora rfremix-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-nonfree-fedora
 --- fedora-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-nonfree-fedora	1970-01-01 03:00:00.000000000 +0300
-+++ rfremix-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-nonfree-fedora	2014-09-02 14:38:29.000000000 +0400
++++ rfremix-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-nonfree-fedora	2014-12-08 01:40:33.586893430 +0300
 @@ -0,0 +1,30 @@
 +-----BEGIN PGP PUBLIC KEY BLOCK-----
 +Version: GnuPG v1.4.9 (GNU/Linux)
