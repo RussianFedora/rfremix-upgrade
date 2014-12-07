@@ -1,0 +1,362 @@
+diff -urN fedora-upgrade-21.3/fedora-upgrade rfremix-upgrade-21.3/fedora-upgrade
+--- fedora-upgrade-21.3/fedora-upgrade	2014-11-24 11:06:20.000000000 +0300
++++ rfremix-upgrade-21.3/fedora-upgrade	2014-12-07 22:54:57.850566626 +0300
+@@ -2,12 +2,12 @@
+ # vim: sw=3:ts=3:et
+ set -e
+ 
+-FEDORA_VERSION=$(rpm -q --qf '%{version}' fedora-release)
+-TARGET_VERSION=$((FEDORA_VERSION + 1))
++RFREMIX_VERSION=$(rpm -q --qf '%{version}' rfremix-release)
++TARGET_VERSION=$((RFREMIX_VERSION + 1))
+ UPGRADE_FINISHED=0
+ 
+ function check_intallation() {
+-  [[ -e /usr/sbin/fedora-upgrade ]]
++  [[ -e /usr/sbin/rfremix-upgrade ]]
+ }
+ 
+ function pause() {
+@@ -49,12 +49,26 @@
+ }
+ 
+ function import_keys() {
+-  rpm --import /usr/share/fedora-upgrade/keys/RPM-GPG-KEY-fedora-$TARGET_VERSION-primary
++  rpm --import /usr/share/rfremix-upgrade/keys/RPM-GPG-KEY-fedora-$TARGET_VERSION-primary
+   if [ -f /etc/yum.repos.d/rpmfusion-free.repo ]; then
+-    rpm --import /usr/share/fedora-upgrade/keys/RPM-GPG-KEY-rpmfusion-free-fedora-$TARGET_VERSION
++    rpm --import /usr/share/rfremix-upgrade/keys/RPM-GPG-KEY-rpmfusion-free-fedora-$TARGET_VERSION
+   fi
+   if [ -f /etc/yum.repos.d/rpmfusion-nonfree.repo ]; then
+-    rpm --import /usr/share/fedora-upgrade/keys/RPM-GPG-KEY-rpmfusion-nonfree-fedora-$TARGET_VERSION
++    rpm --import /usr/share/rfremix-upgrade/keys/RPM-GPG-KEY-rpmfusion-nonfree-fedora-$TARGET_VERSION
++  fi
++  if [ $TARGET_VERSION -ge 21 ]; then
++    if [ -f /etc/yum.repos.d/russianfedora-branding.repo ]; then
++      rpm --import /usr/share/rfremix-upgrade/keys/RPM-GPG-KEY-russianfedora-fixes-branding
++    fi
++  fi
++  if [ -f /etc/yum.repos.d/russianfedora-fixes.repo ]; then
++    rpm --import /usr/share/rfremix-upgrade/keys/RPM-GPG-KEY-russianfedora-fixes-fedora
++  fi
++  if [ -f /etc/yum.repos.d/russianfedora-free.repo ]; then
++    rpm --import /usr/share/rfremix-upgrade/keys/RPM-GPG-KEY-russianfedora-free-fedora
++  fi
++  if [ -f /etc/yum.repos.d/russianfedora-nonfree.repo ]; then
++    rpm --import /usr/share/rfremix-upgrade/keys/RPM-GPG-KEY-russianfedora-nonfree-fedora
+   fi
+ }
+ 
+@@ -103,7 +117,14 @@
+ function is_prerelease() {
+   # will print string "--enablerepo=updates-testing" if this is prerelease, "" otherwise
+   local RELEASE=$1
+-  if yumdownloader --disablerepo=* --enablerepo=fedora --releasever=$RELEASE fedora-release --urls | tail -n 1 | wget -q -i - -O - | rpm2cpio | cpio -i --quiet --to-stdout - ./etc/yum.repos.d/fedora-updates-testing.repo | grep 'enabled=1' >/dev/null; then
++
++  if [ $RELEASE -ge 21 ]; then
++    RUSSIANFEDORA_REPO="branding"
++  else
++    RUSSIANFEDORA_REPO="fixes"
++  fi
++
++  if yumdownloader --disablerepo=* --enablerepo=russianfedora-$RUSSIANFEDORA_REPO --releasever=$RELEASE rfremix-release --urls | tail -n 1 | wget -q -i - -O - | rpm2cpio | cpio -i --quiet --to-stdout - ./etc/yum.repos.d/fedora-updates-testing.repo | grep 'enabled=1' >/dev/null; then
+     echo "--enablerepo=updates-testing"
+   else
+     echo ""
+@@ -113,17 +134,17 @@
+ function print_exit_banner() {
+   if [ $UPGRADE_FINISHED -eq 1 ]; then
+     echo
+-    echo You sucessfullly upgraded to Fedora $TARGET_VERSION
++    echo You sucessfullly upgraded to RFRemix $TARGET_VERSION
+     echo Reboot is strongly suggested.
+     exit 0
+   elif [ $UPGRADE_FINISHED -eq 0 ]; then
+     echo
+-    echo Upgrade to Fedora $TARGET_VERSION was not finished!
+-    echo You can safely re-run fedora-upgrade again to start over.
++    echo Upgrade to RFRemix $TARGET_VERSION was not finished!
++    echo You can safely re-run rfremix-upgrade again to start over.
+     exit 1
+   else
+     echo
+-    echo Upgrade to Fedora $TARGET_VERSION was not finished!
++    echo Upgrade to RFRemix $TARGET_VERSION was not finished!
+     echo Finish steps manually according to documentation on the wiki:
+     echo 'http://fedoraproject.org/wiki/Upgrading_Fedora_using_yum#5._Make_sure_Fedora_is_upgraded'
+     exit 2
+@@ -131,11 +152,11 @@
+ }
+ 
+ function welcome_banner() {
+-  echo "Going to upgrade your Fedora to version $1."
++  echo "Going to upgrade your RFRemix to version $1."
+   echo "You may want to read Release Notes:"
+   echo "  http://docs.fedoraproject.org/release-notes/"
+   echo "Warning: This is unofficial upgrade tool. Official tool is 'fedup'."
+-  echo "         While author of fedora-upgrade thinks fedora-upgrade is better, it is"
++  echo "         While author of rfremix-upgrade thinks rfremix-upgrade is better, it is"
+   echo "         not officially tested by FedoraQA."
+   pause
+ }
+@@ -157,28 +178,28 @@
+   done
+   if [ "$ANSWER" != "nonproduct" ] ; then
+     # would be nice to use:
+-    # yum swap -- remove fedora-release-workstation -- install fedora-release-server
++    # yum swap -- remove rfremix-release-workstation -- install rfremix-release-server
+     # but it does not work BZ 1167194
+     if [ "$ANSWER" != "cloud" ] ; then
+       rpm -e --nodeps firewalld-config-standard >/dev/null || :
+     fi
+-    rpm -q fedora-release-nonproduct >/dev/null && rpm -e fedora-release-nonproduct
++    rpm -q rfremix-release-nonproduct >/dev/null && rpm -e rfremix-release-nonproduct
+     if [ "$ANSWER" != "cloud" ] ; then
+       yum install -y firewalld-config-$ANSWER firewalld-config-$ANSWER
+     fi
+   fi
+-  yum install -y fedora-release-$ANSWER
++  yum install -y rfremix-release-$ANSWER
+ }
+ 
+ if ! check_intallation; then
+-  echo "Please install fedora-upgrade package using yum first"
++  echo "Please install rfremix-upgrade package using yum first"
+   exit 2
+ fi
+ 
+ # make obvious ending for unexperienced users
+ trap "print_exit_banner" SIGHUP SIGINT SIGTERM
+ 
+-if [ 0$FEDORA_VERSION -eq 19 ]; then
++if [ 0$RFREMIX_VERSION -eq 19 ]; then
+   welcome_banner 20
+ 
+   install_deps
+@@ -198,7 +219,7 @@
+   cleanup_cache
+   unwanted_packages 19
+   UPGRADE_FINISHED=1
+-elif [ 0$FEDORA_VERSION -eq 20 ]; then
++elif [ 0$RFREMIX_VERSION -eq 20 ]; then
+   welcome_banner 21
+ 
+   install_deps
+@@ -220,18 +241,18 @@
+   cleanup_cache
+   unwanted_packages 20
+   UPGRADE_FINISHED=1
+-elif [ 0$FEDORA_VERSION -eq 21 ]; then
+-  echo "Going to upgrade your Fedora to rawhide."
+-  echo "Fedora $TARGET_VERSION is currently under development."
++elif [ 0$RFREMIX_VERSION -eq 21 ]; then
++  echo "Going to upgrade your RFRemix to rawhide."
++  echo "RFRemix $TARGET_VERSION is currently under development."
+   echo "Are you sure?"
+   pause
+ 
+   install_deps
+   rpmconf_before_upgrade
+ 
+-  yum install fedora-release-rawhide yum-utils
+-  yum-config-manager --disable fedora updates updates-testing
+-  yum-config-manager --enable rawhide
++  yum install rfremix-release-rawhide yum-utils
++  yum-config-manager --disable '*'
++  yum-config-manager --enable '*rawhide*'
+   yum update -q yum
+   yum clean -q dbcache rpmdb plugins metadata
+   yum --releasever=rawhide --disableplugin=presto distro-sync --nogpgcheck
+@@ -244,7 +265,7 @@
+   cleanup_cache
+   UPGRADE_FINISHED=1
+ else
+-  echo Upgrading from version $FEDORA_VERSION is not supported.
++  echo Upgrading from version $RFREMIX_VERSION is not supported.
+   exit 1
+ fi
+ print_exit_banner
+diff -urN fedora-upgrade-21.3/fedora-upgrade.8.asciidoc rfremix-upgrade-21.3/fedora-upgrade.8.asciidoc
+--- fedora-upgrade-21.3/fedora-upgrade.8.asciidoc	2014-11-24 11:06:20.000000000 +0300
++++ rfremix-upgrade-21.3/fedora-upgrade.8.asciidoc	2014-12-07 22:29:05.381979515 +0300
+@@ -1,24 +1,24 @@
+-fedora-upgrade(8)
++rfremix-upgrade(8)
+ =================
+-:man source:  fedora-upgrade
+-:man manual:  Fedora Upgrade
++:man source:  rfremix-upgrade
++:man manual:  RFRemix Upgrade
+ 
+ NAME
+ ----
+-fedora-upgrade - tool to guide you with upgrade of Fedora to next major version using yum.
++rfremix-upgrade - tool to guide you with upgrade of RFRemix to next major version using yum.
+ 
+ 
+ SYNOPSIS
+ --------
+-*fedora-upgrade*
++*rfremix-upgrade*
+ 
+ 
+ DESCRIPTION
+ -----------
+ 
+-Script *fedora-upgrade* tries to automate steps needed for yum-upgrade from one major version to next one.
++Script *rfremix-upgrade* tries to automate steps needed for yum-upgrade from one major version to next one.
+ 
+-Steps which fedora-upgrade does:
++Steps which rfremix-upgrade does:
+ 
+ * Display usual warnings.
+ * Check dependencies.
+@@ -38,9 +38,10 @@
+ 
+ BUGS
+ ----
+-If you experience some problem, please report it at: https://github.com/xsuchy/fedora-upgrade/issues
++If you experience some problem, please report it at: http://redmine.russianfedora.pro
+ 
+ 
+ AUTHOR
+ ------
+ Miroslav Suchý <msuchy@redhat.com>
++Arkady L. Shane <ashejn@russianfedora.pro>
+diff -urN fedora-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-branding-fedora rfremix-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-branding-fedora
+--- fedora-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-branding-fedora	1970-01-01 03:00:00.000000000 +0300
++++ rfremix-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-branding-fedora	2014-09-02 14:44:27.000000000 +0400
+@@ -0,0 +1,31 @@
++-----BEGIN PGP PUBLIC KEY BLOCK-----
++Version: GnuPG v1
++
++mQENBFLiSm0BCADDtSYaWecBu43lrQlOYuXF7pTIGpiTFhEUtJSNraxE9rV38tsO
++W7+ZTMfjG30uHaH4dzMOaKjVTEe25l51dnFmIGhxRtibn2QXHzo0bbI0KUd63Gbq
++oKTm2neJfz8UOFA7T9hR0io+W1KrsnGdWSOibMsqshRu7zpNdrzPR12/fj+R3iA2
++MDq9Pmr339w9qRrfrn94PmvKecGmMiu3WU/4W6Pdq+S0XCU1nJNSji5LYsegmV8n
++pG/gpwnYVZqzGHO0mfPlSe/fueoxkHiWGsXxA8ipsw6ohJwjxV/YApIoDiLshBEz
++IB/63Tuy0uofzTmwFIowJnGdMvyDypNoBwsNABEBAAG0SlJ1c3NpYW4gRmVkb3Jh
++IHJlcG9zaXRvcnkgKFJGUmVtaXggLSBicmFuZGluZykgPHBhY2thZ2VzQHJ1c3Np
++YW5mZWRvcmEucnU+iQE4BBMBAgAiBQJS4kptAhsDBgsJCAcDAgYVCAIJCgsEFgID
++AQIeAQIXgAAKCRD++KbSxmrYvEEGB/9ph9nMpEjqbB73hlQK+zCBR+7FiNoluyZV
++2lqS25OUrzLJ/CLV/cD2XP4aYb6ZgVVrx6iSD7CiMEV/D1479qdupTyA+yRSpB+T
++QItKqE314/HmhjOtDW0si3MBiAnJQNzjm2RkpIJREfoiYH95PJ8cikE+21yx0M0M
++PZ1kj2X2CqT8ffsCtE8qabLQLywOIg3K2jEIrzBLoSeQ0DAoGk2gKROyzxphZ9l8
++evYFLxFCh+T2vIwQ5d+XkDihAQVUmnvPOyKV3QMF3hTsUA3pn7mGSCeJc2COH/xO
++pWAPuXTlYT3gZti+ZJ1EqKtrmBuBREyIoQZmTTHB1UnpvWTMi+OluQENBFLiSm0B
++CAC6DJdlM8qZX+EYCnFt02XEx8j1dKws9898lAHXV0LmO82M1jDlbBcYriJOvhTs
++J2LJfea1Zv9/q51cDEQZs3/zAfwNb2Z7gzvY7GP+VV0WF7o2FyYbUITuoYpeXZhm
++9KFaTYSbir3ehAh2UKxEW8DW0OCcjIxicT3SVr2tjJ2gdJOZUyPuFOVP8MRX58M4
++nDgqkyi8eiIxC9dlWJICCnV/QFYVKVUoD04TfMbPsaFAkR/n7Ll/S7EMj6IIgmiF
++cLF8DL5c08BENPXXW98RrHHFj00nrv09R2Pr6lco6sG+fssxa7YH5Du9DbM85IRo
++QlQp9A2G/VAuG6SXy4BB/ssBABEBAAGJAR8EGAECAAkFAlLiSm0CGwwACgkQ/vim
++0sZq2LxxTAf/d8mkJjqzpMO+YHIKzatAnU96rVJtdY/v/lTKnpOdahn3RfhT5RHn
+++DO0JrP9iAnV/j9nAq979y4mjFvRRYWSoBVjYzJ3A9SbobyjBdYQn5E8vpSjF44r
++KWHlKYQQQ1liW1VeJXLGdduwff47lWumyxeow3+rP9Q3svHsfiMV6CbQMGJIgm7D
++rRbUyT7l9PdMwFa3k7c1WXnsEiMpdVHXa9zvziw32UMlN+OAnqNBRY88AtFOrPDE
++5Uy5qc1L7I8tv0T20n6LdnVylhx3rgDC1ewM2li3PltK362VHusqE0C989+hBOSj
++0i5dcTWepg4XcfnmSQZYmcHPOiLlhl2vhw==
++=6VUi
++-----END PGP PUBLIC KEY BLOCK-----
+diff -urN fedora-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-fixes-fedora rfremix-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-fixes-fedora
+--- fedora-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-fixes-fedora	1970-01-01 03:00:00.000000000 +0300
++++ rfremix-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-fixes-fedora	2014-09-02 14:42:24.000000000 +0400
+@@ -0,0 +1,30 @@
++-----BEGIN PGP PUBLIC KEY BLOCK-----
++Version: GnuPG v1.4.9 (GNU/Linux)
++
++mQGiBEljQMkRBACpGvlvVFqPoFIC5G9Qu69oIOwpWSm4k4swQN3iwC7EMjJmmqyd
++HPVL7EF8SM4XEd7FvauE9GSO1tnV55QxhSCcD9l1iI/+DxxkUuTlaYD8yootCL9i
++AvhYAvqMEt8GqquqowYuFsKSP3QcDj7JJ16lROLnk1QY2lD+bWPJoAQsLwCg0mHK
++WQsAzShVBufnU7bi4ELxZ8cD/3dNNwm9dUGdhbxrwXMe3zc66qgmPSaUNAW+zoFT
++iqfBD81DKt4vYlducxo8faYfMkTUvnpqYIFWXef+khb+FvxIdD0IIgRgNaVKBS9j
++ZHB6Nk9ymaOjYu3kyTccPpeoer1/+xPTUncr/ch17CRWVtLYx9fMos0k05uI31S2
++8GY1A/9N0v7F1ucVC7FCqjNwjGpBcV1DbZe8Sy4vIpAIFH1q2QlzTNVOmdU8Mn9h
++nhEjZXsFWl/2kESNwAlRKAy5eKhSnmpIHfqYOPy0nnNBBZTR4TmJN8vOHABcwCzi
++PnXtZGJik22Jsl0ged+VijlHOzZX5fGkd039RWM2kqHtRSXQs7RGUnVzc2lhbiBG
++ZWRvcmEgcmVwb3NpdG9yeSAoRmVkb3JhIC0gZml4ZXMpIDxwYWNrYWdlc0BydXNz
++aWFuZmVkb3JhLnJ1PohgBBMRAgAgBQJJY0DJAhsDBgsJCAcDAgQVAggDBBYCAwEC
++HgECF4AACgkQNxo7Jk3WUYBPOACdEBJbLoAcDGFVn79f05lozObqUPMAoLni68qq
++waiz7AvVL8UwRuqUA3j/uQINBEljQMkQCACnjx55TgzexVx6l4PVFz4SM+wMOun+
++O7yHyqjiJb/WlQIKUdjCXOU5e6s8e3d4xfmWRf/sEoLh/s4npkEZO+otgDWl/kvd
++bQkKGQl9tK6lLGcIhkLyrKtwRDjVFc93fesoTttaM3v+27mIi0zJ9FL130OXr7yA
++VonEh3NG6qSys02ZbKmgXSo2eMHttYWlAgddhiew2emb5oZzadh23YItzLK3ZbuW
++Ve9BZWGt0DdetSsea9EylHYr5mbfG0QFbTH8Rjjvtnbr4EQYzttzDlwe78ozkW+K
++y9UeTpP4MbesKVyzAdn9U+iwBqTeOulsqK4lWPkybWSgjd6sqyI4OBsPAAQLCACY
++DI2ffo5Pu+3rHTGW4qfxD/JajkTAVNkQZgse2db4j6Re6vI9ktj6nr05ZsYcaV4u
++6Uc6hI6ozd6pnJ0znz6exJWm98KtZD5oiVa2uRYUbpMy08LS1xFfn0+xCBp2Mgqf
++QSAsz3Vb/lha+ygjMKLSAGXLZi1l5jJ2kGE559l9KL9ZaoRYFDJFSe2AlRMnJM3S
++t9wybLb6wmGHePzsY6UbWywmU9cqOw2sWc4SIwvTZS7cnbhUG6dE1XSiDiuTD4HV
++9vj2s1IOHRTtqSDzPXZOTp5pgLZFOUCOa76yNiXzoDH72M8Oalq4b69gJJIS760s
++qv7/lHcbFNZMoYwksqOEiEkEGBECAAkFAkljQMkCGwwACgkQNxo7Jk3WUYAUaQCg
++yUDz7AipjOln2tiPbdQHBDdMEc8AniTx/WSQ/7cNkdtXKy7YZmhhca3s
++=N74P
++-----END PGP PUBLIC KEY BLOCK-----
+diff -urN fedora-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-free-fedora rfremix-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-free-fedora
+--- fedora-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-free-fedora	1970-01-01 03:00:00.000000000 +0300
++++ rfremix-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-free-fedora	2014-09-02 14:40:28.000000000 +0400
+@@ -0,0 +1,30 @@
++-----BEGIN PGP PUBLIC KEY BLOCK-----
++Version: GnuPG v1.4.9 (GNU/Linux)
++
++mQGiBEljP1cRBADwrnKChvFvv8GwSySJB+fCeFibOA31vEULAWbWKyzE2f0MgEA8
++XnjtqfcBQU7yVNtk5RQYC9TZnbkoomKjStaBMVz5qjwC+lHTqGR0xAv4fiQv/BxE
++r+iITj0Ojnf65/sUyFzNklJzFmezz3Oxo/iUW9k1QkJOapleBFxs33671wCg0yyB
++h+jDYVMsBs42LMEo/RWP3IEEAMjG18AN/IGL7VtgnReyCdE47UKDKON2oaPNlZrC
++5olRp+EydngNoVYJ+cbknM9AYExR00j8+HpXkPQa6gApmvyVkUOZZ3dv/g8wQyyA
++C6gkO13vZmjnaR1+hNH9WarPFtG2J0p/A/CGkJaaHCx08+B3P4YVB3xM44nlI5qw
++mhYABADZ9lYyShWA38QbDb9ZB/Z3uabgVICI+UOHrSdCO6ft5LcMgXGd+BPlVVat
++WJ48rJT5Sa7ixd4MItjaTS4nQqXL3ZZwkvUoXqIDxX9TaeEXVP99EJyI5pZi1jbx
++GZrJHq8rxprKNEjufdDbdNsjvhmUoRSyTcP6jaW1BgbRRXL8irRFUnVzc2lhbiBG
++ZWRvcmEgcmVwb3NpdG9yeSAoRmVkb3JhIC0gZnJlZSkgPHBhY2thZ2VzQHJ1c3Np
++YW5mZWRvcmEucnU+iGAEExECACAFAkljP1cCGwMGCwkIBwMCBBUCCAMEFgIDAQIe
++AQIXgAAKCRCDGL6D27bHDRjgAJ90XZQ1pKRHCy+/KMNbUEdP1RAYAQCbBPECwDvg
++R3WJ3LLtz+oOr2H0vKu5Ag0ESWM/VxAIAPTn4LhOp5JkWeckYVRdWSuHPN6ZIFn1
++HdILfuoy43BRBi8BzOakzelOxURBGMFQf9EZ0iPCqn2+ZtyoeE1s5/w9R3WonyXE
++Ob0yviQF+V5ydfzmm5FL++iGLOkrcHzHSv3x0/34lmbJxHzVJzf62JcyHkYfHpsK
++dci/F5wLEsgUkkX2Giv1qLzBw81FYtQ2wVLQ3O6dgj3W6l+EDO0DeSi118a06/eV
++4aZ6u+nnqQyhCv73CgiNbjcBE5Me3p0tW53qQARa2gp9SUD5WocMr/mN7fZNjtjl
++jL2ERjF4faYtgnRMrLhknRVKQ+6oB5o6l+G/7UuLwChBQqyLB2PjtLcAAwUIALgq
++da/wcEfxdFlSU93MYzui4ZDPr1RD/yJT6ifJDCFWFCAlj9+yI3d3x0dRqpRgawLx
++ll5Yb3DSkZA/4WZeDbJ33p9g4zU6keVF2pN/7JaZww+4jEb+tmrzE6tYnDBBp6mC
++bU+KpNKzb/8iR8l5Vl9IsxWhHv1nWvpu3hGg9o9kBH0a8IagwyoHPx3v7VF7XTcT
++7lv4OkMu6IOQqBnCZguJKHIJUlxVJ00RWkvyOOarA4552FkdF4jqFqqY9WvDBc1p
++7kXFmqZMXnD9gt3UJzE9bgdzRbQncAmzl16OB8oBQFNMktZv5i7sYOu+bnoBYc2S
++lXT/LpdesBzXAgmewcWISQQYEQIACQUCSWM/VwIbDAAKCRCDGL6D27bHDYRiAKCS
++61N07LVDdOTHX2zU0ZKMcAA6agCZAVwnJXwUyyBXdhMJkGEgnOQQnN4=
++=x3Ix
++-----END PGP PUBLIC KEY BLOCK-----
+diff -urN fedora-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-nonfree-fedora rfremix-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-nonfree-fedora
+--- fedora-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-nonfree-fedora	1970-01-01 03:00:00.000000000 +0300
++++ rfremix-upgrade-21.3/keys/RPM-GPG-KEY-russianfedora-nonfree-fedora	2014-09-02 14:38:29.000000000 +0400
+@@ -0,0 +1,30 @@
++-----BEGIN PGP PUBLIC KEY BLOCK-----
++Version: GnuPG v1.4.9 (GNU/Linux)
++
++mQGiBEljQG8RBADZZXf9Ae6zjRydQRM99sl+metZ8D/SY8y/h89B7epmqS70f/qN
++mUWw9ZCUX7I2dN8/JlYjX09r8w/USn6vU1LA7KM2P8Pc2tpYpR6H+N20eFO1A1MF
++Uph8JGgowCXxbCfM9pb/rQ0u50+fLlZO7fKif+u+z7YsMkI+ExKRGiDRSwCg4qGv
++Uo1AjDGFhMgRRRl4i+YYgZ0D/1W4LNSFrMlnrkWcpeX1tkEopafRV1zUVcYpuAqg
++uvXzPMqo1UqueY67hrUmdYEEh56IKsdr21H94XJYKCYN4Ae01gG0OG7aFuEAbZuY
++V/LUKN1whhNwyXndL8+6gUkSUvtNeO1sD257XEJPsnRocR94CxUoAGW/sFrK5gSC
++6qPJBACz29gcMfxd+oLRoXw75MCaJj+18bTq0MYZuV5EaoFxii0PCwhb4jO4NMuF
++iBsNwIRD5mIPN8xA4BixDIzBpomms9TSNXbpwcgaWaHq5IN7XkCVGOkKyEL627/6
++PJS5sdbfOdRRrLX99RNc98OvICft0/Cfd80VetuLsLPQTjZvKrRIUnVzc2lhbiBG
++ZWRvcmEgcmVwb3NpdG9yeSAoRmVkb3JhIC0gbm9uZnJlZSkgPHBhY2thZ2VzQHJ1
++c3NpYW5mZWRvcmEucnU+iGAEExECACAFAkljQG8CGwMGCwkIBwMCBBUCCAMEFgID
++AQIeAQIXgAAKCRBWeaabFFOTbcYSAJ9xxuD2MNZqItKeOfWf2X9AIAePFgCeNIns
++c66dcevA99cu6eP03bOiAzS5Ag0ESWNAbxAIAPmjOnYp8xnkqXCFLr1W/fUDoCBg
++71qaQ6hRjPcx42FppWDJwE7qjdjWRCRCj/f++1Yw4a+0nYBKsgCHmtxt021nAoLW
++p9/XGmacw9XXmmNapv1y0U4X4BC9i2sMlwGd53inJpJGuMcO2layHa+yCRUCilkS
++GLGKbZENHASylCyPxtA+ncfsxD1+M4ZZbEk/eVyKdtakPF5VIHpgkVkdflzqMCa5
++WLQnuf6mKzKPlxaYr3ebh0Er41mud6TD/kJBkQYyfBcQs0YQghlsvixgwjbCwjdq
++BELE+lHPHVA5YebycMsR+kBZHxipGyxrV04Jp7El1OBQmFw0AnlIkKM0NxMAAwYH
+++wf5rRygIEX5SVYaPJ+VbjJk0u/zbPbc8aHdHPFsw6E/utdDyWZnqoOMpxKtzgJO
++yUBance/8cDSKnQkAvh8Qmno0PYUaExApSyXXqe+RbDTO2K34h7QXAe/9KFXj00s
++vpr3zWfG9t7hLsLGMTqkk3L5ReLfduSTmU7Qp49P0QoqSCxs5EuoBb/Q31VhM3AE
++hN2Npxcr67LhE0rBsR+Jp3jLzgdlaeZlknt5QTNqDtW4T0Ch2v/OCGgNEyo39L7v
++ZG9S/oKSDg9e8ZK4bLkrHk+w4NroEDCkDhlgQAwaT3dppfvp23eniccOkpCxkU9E
++CtO56d9d8ypk4twCldDx5mCISQQYEQIACQUCSWNAbwIbDAAKCRBWeaabFFOTbbad
++AJ9n9fzEII6wHghWoBYkGxVZhKbk3wCgz12UdUT2+qXF3gorI1/ppna1bfg=
++=edSd
++-----END PGP PUBLIC KEY BLOCK-----
