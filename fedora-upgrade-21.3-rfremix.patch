@@ -32,7 +32,7 @@ diff -urN fedora-upgrade-21.3/fedora-upgrade rfremix-upgrade-21.3/fedora-upgrade
 +    rpm --import /usr/share/rfremix-upgrade/keys/RPM-GPG-KEY-rpmfusion-nonfree-fedora-$TARGET_VERSION
 +  fi
 +  if [ -f /etc/yum.repos.d/russianfedora-branding.repo ]; then
-+    rpm --import /usr/share/rfremix-upgrade/keys/RPM-GPG-KEY-russianfedora-fixes-branding
++    rpm --import /usr/share/rfremix-upgrade/keys/RPM-GPG-KEY-russianfedora-branding-fedora
 +  fi
 +  if [ -f /etc/yum.repos.d/russianfedora-fixes.repo ]; then
 +    rpm --import /usr/share/rfremix-upgrade/keys/RPM-GPG-KEY-russianfedora-fixes-fedora
