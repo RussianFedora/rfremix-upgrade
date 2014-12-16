@@ -149,7 +149,7 @@ diff -urN fedora-upgrade-21.3/fedora-upgrade rfremix-upgrade-21.3/fedora-upgrade
 +  echo "Russian Fedora Branding is a new repository that contains"
 +  echo "branding packages which were in Fixes repository before."
 +
-+  yum -y --nogpgcheck install \
++  yum -y --nogpgcheck localinstall \
 +    http://mirror.yandex.ru/fedora/russianfedora/russianfedora/branding/fedora/releases/21/Everything/i386/os/russianfedora-branding-release-21-1.R.noarch.rpm
 +
    yum clean -q dbcache rpmdb plugins metadata

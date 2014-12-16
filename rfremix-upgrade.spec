@@ -1,6 +1,6 @@
 Name:		rfremix-upgrade
 Version:	21.3
-Release:	2%{?dist}
+Release:	3%{?dist}
 Summary:	Upgrade Fedora to next version using yum upgrade (unofficial tool)
 
 Group:		Applications/System
@@ -53,6 +53,10 @@ cp -a keys/* %{buildroot}%{_datadir}/%{name}/keys
 %{_datadir}/%{name}
 
 %changelog
+* Tue Dec 16 2014 Arkady L. Shane <ashejn@russianfedora.pro> - 21.3-3.R
+- use yum localinstall to install branding release file. Local
+  install return zero if package already exist
+
 * Wed Dec 10 2014 Arkady L. Shane <ashejn@russianfedora.pro> - 21.3-2.R
 - fix gpg key file name
 
